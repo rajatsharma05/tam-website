@@ -15,6 +15,11 @@ interface EventsTabProps {
     time: string
     location: string
     capacity: number
+    price?: number
+    posterUrl?: string
+    teamType?: 'individual' | 'team'
+    minTeamSize?: number
+    maxTeamSize?: number
   }) => void
   onToggleEvent: (eventId: string, isActive: boolean) => void
   onDeleteEvent: (eventId: string) => void

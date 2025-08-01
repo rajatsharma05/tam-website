@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
+import HeroBackground from '@/components/HeroBackground'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -11,43 +12,46 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen flex items-center">
-        {/* Enhanced Background decoration */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse-slow"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/4 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl animate-bounce-gentle"></div>
+      <section className="relative overflow-hidden min-h-screen flex items-center -mt-20">
+        {/* Auto-scrolling background */}
+        <HeroBackground />
         
-        <div className="relative py-24 px-4 sm:px-6 lg:px-8 w-full">
-          <div className="max-w-7xl mx-auto text-center">
-            <div className="animate-fade-in">
-              <div className="mb-8">
-                <div className="mb-6 animate-slide-up flex justify-center relative">
-                  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 z-0 rounded-full" style={{ width: '100%' }} />
-                  <div className="h-40 w-40 relative z-10 flex justify-center items-center mx-auto">
-                    <Image
-                      src="/tam-logo.png"
-                      alt="TAM Logo"
-                      width={160}
-                      height={160}
-                      className="h-40 w-40 object-contain"
-                      style={{ mixBlendMode: 'screen' }}
-                    />
-                  </div>
+        {/* Content Container */}
+        <div className="relative z-10 w-full">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
+            <div className="text-center">
+              
+              {/* Logo Section */}
+              <div className="mb-8 animate-fade-in">
+                <div className="inline-block">
+                  <Image
+                    src="/tam-logo.png"
+                    alt="TAM Logo"
+                    width={160}
+                    height={160}
+                    className="h-32 w-32 md:h-40 md:w-40 object-contain drop-shadow-lg"
+                  />
                 </div>
               </div>
               
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gradient mb-8 text-center px-2 md:px-0 leading-tight" style={{ lineHeight: '1.15', paddingBottom: '0.25em' }}>
-                Technology Awareness Month
-              </h1>
+              {/* Main Heading */}
+              <div className="mb-12 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+                  Technology Awareness Month
+                </h1>
+              </div>
               
-              <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                Bridging the gap between students and cutting-edge technology through interactive events, workshops, and discussions.
-              </p>
+              {/* Subtitle */}
+              <div className="mb-16 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed">
+                  Bridging the gap between students and cutting-edge technology through interactive events, workshops, and discussions.
+                </p>
+              </div>
               
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-20 animate-slide-up" style={{ animationDelay: '0.6s' }}>
                 <Link href="/events">
-                  <Button size="lg" className="text-lg px-8 py-4 h-auto btn-primary animate-bounce-gentle shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                  <Button size="lg" className="text-base px-8 py-4 h-auto bg-white text-gray-900 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -57,7 +61,7 @@ export default function HomePage() {
                 
                 {!user && !loading && (
                   <Link href="/auth">
-                    <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto btn-secondary shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    <Button variant="outline" size="lg" className="text-base px-8 py-4 h-auto bg-white/10 text-white font-semibold border-2 border-white/30 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -68,18 +72,18 @@ export default function HomePage() {
               </div>
               
               {/* Stats Section */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-slide-up" style={{ animationDelay: '0.6s' }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto animate-slide-up" style={{ animationDelay: '0.8s' }}>
                 <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-2">10+</div>
-                  <div className="text-gray-600 font-medium">Years of Impact</div>
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">10+</div>
+                  <div className="text-white/80 text-sm md:text-base">Years of Impact</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-2">500+</div>
-                  <div className="text-gray-600 font-medium">Students Reached</div>
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">500+</div>
+                  <div className="text-white/80 text-sm md:text-base">Students Reached</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-2">50+</div>
-                  <div className="text-gray-600 font-medium">Events Hosted</div>
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">50+</div>
+                  <div className="text-white/80 text-sm md:text-base">Events Hosted</div>
                 </div>
               </div>
             </div>

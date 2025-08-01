@@ -89,9 +89,16 @@ export async function POST(request: NextRequest) {
           checkinIds,
         };
       } else {
-        // Individual check-in (existing logic)
+        // Individual check-in: ensure registrantName is properly set
         const checkinData = {
-          ...registration,
+          eventId: registration.eventId,
+          eventName: registration.eventName,
+          registrantName: registration.registrantName || (registration as unknown as { name?: string }).name || 'Unknown',
+          rollNumber: registration.rollNumber,
+          departmentSection: registration.departmentSection,
+          email: registration.email,
+          phone: registration.phone,
+          qrCode: registration.qrCode,
           checkInTime: new Date(),
           isCheckedIn: true
         }

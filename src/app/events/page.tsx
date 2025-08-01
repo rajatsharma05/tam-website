@@ -198,6 +198,24 @@ export default function EventsPage() {
                         return event.time;
                       })()}</span>
                     </div>
+                    {event.price !== undefined && event.price > 0 && (
+                      <div className="flex items-center text-sm text-gray-600 group-hover:text-gray-700 transition-colors duration-200">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-200">
+                          <span className="text-green-600 font-bold text-lg">₹</span>
+                        </div>
+                        <span className="font-medium text-green-600">₹{event.price} Registration Fee</span>
+                      </div>
+                    )}
+                    {event.price === 0 && (
+                      <div className="flex items-center text-sm text-gray-600 group-hover:text-gray-700 transition-colors duration-200">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-200">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-blue-600">Free Event</span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mt-auto space-y-3">

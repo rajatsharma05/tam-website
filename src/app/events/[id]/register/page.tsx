@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore'
-import { addDoc, collection } from 'firebase/firestore'
+import { doc, getDoc, addDoc, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Event } from '@/types'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -38,91 +37,6 @@ export default function EventRegistrationPage() {
       fetchEvent()
     }
   }, [params.id, router])
-
-  // Add explicit types for formData
-  interface IndividualFormData {
-    name: string;
-    rollNumber: string;
-    departmentSection: string;
-    phone: string;
-  }
-  interface TeamFormData {
-    teamName: string;
-    teamLeaderEmail: string;
-    teamMembers: Array<{ name: string; rollNumber: string; departmentSection: string; phone: string }>;
-  }
-
-  const handleRegistrationSubmit = async (formData: IndividualFormData | TeamFormData) => {
-    if (!event) return;
-    setSubmitting(true);
-    try {
-      if ('teamName' in formData && 'teamLeaderEmail' in formData && 'teamMembers' in formData) {
-        // TEAM REGISTRATION
-        const qrData = `${event.id}-team-${formData.teamName.replace(/\s+/g, '')}-${Date.now()}`;
-        const registrationData = {
-          eventId: event.id,
-          eventName: event.title,
-          teamName: formData.teamName,
-          teamLeaderEmail: formData.teamLeaderEmail,
-          teamMembers: formData.teamMembers,
-          qrCode: qrData,
-          isCheckedIn: false,
-          createdAt: new Date()
-        };
-        await addDoc(collection(db, 'registrations'), registrationData);
-        await updateDoc(doc(db, 'events', event.id), {
-          registeredCount: increment(formData.teamMembers.length)
-        });
-        // Send QR to team leader
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.teamLeaderEmail,
-            eventName: event.title,
-            teamName: formData.teamName,
-            qrCode: qrData
-          }),
-        });
-        router.push(`/events/${event.id}/success`);
-      } else {
-        // INDIVIDUAL REGISTRATION (existing logic)
-        if (!user) return;
-        const qrData = `${event.id}-${user.uid}-${Date.now()}`;
-        const registrationData = {
-          eventId: event.id,
-          eventName: event.title,
-          registrantName: (formData as IndividualFormData).name,
-          rollNumber: (formData as IndividualFormData).rollNumber,
-          departmentSection: (formData as IndividualFormData).departmentSection,
-          email: user.email,
-          phone: (formData as IndividualFormData).phone,
-          qrCode: qrData,
-          isCheckedIn: false,
-          createdAt: new Date()
-        };
-        await addDoc(collection(db, 'registrations'), registrationData);
-        await updateDoc(doc(db, 'events', event.id), {
-          registeredCount: increment(1)
-        });
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: user.email,
-            eventName: event.title,
-            registrantName: (formData as IndividualFormData).name,
-            qrCode: qrData
-          }),
-        });
-        router.push(`/events/${event.id}/success`);
-      }
-    } catch {
-      alert('Registration failed. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -169,11 +83,93 @@ export default function EventRegistrationPage() {
     )
   }
 
+  const handleRegistration = async (
+    formData:
+      | { name: string; rollNumber: string; departmentSection: string; phone: string }
+      | { teamName: string; teamMembers: Array<{ name: string; rollNumber: string; departmentSection: string; phone: string }>; teamLeaderEmail: string }
+  ) => {
+    if (!event || !user) return
+
+    setSubmitting(true)
+    try {
+      const qrCode = `${event.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      // Prepare registration data with correct field names
+      const registrationData = {
+        eventId: event.id,
+        eventName: event.title,
+        email: user.email,
+        createdAt: new Date(),
+        isCheckedIn: false,
+        qrCode,
+        ...(('teamName' in formData) 
+          ? {
+              teamName: formData.teamName,
+              teamLeaderEmail: formData.teamLeaderEmail,
+              teamMembers: formData.teamMembers,
+              // For team events, use the first member's details as the main registrant
+              registrantName: formData.teamMembers[0].name,
+              rollNumber: formData.teamMembers[0].rollNumber,
+              departmentSection: formData.teamMembers[0].departmentSection,
+              phone: formData.teamMembers[0].phone,
+            }
+          : {
+              registrantName: formData.name,
+              rollNumber: formData.rollNumber,
+              departmentSection: formData.departmentSection,
+              phone: formData.phone,
+            }
+        )
+      }
+
+      // Save registration to Firebase
+      await addDoc(collection(db, 'registrations'), registrationData)
+      
+      // Send confirmation email
+      try {
+        const emailData = {
+          email: user.email,
+          eventName: event.title,
+          qrCode,
+          ...(('teamName' in formData) 
+            ? { teamName: formData.teamName }
+            : { registrantName: formData.name }
+          )
+        }
+
+        const emailResponse = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailData)
+        })
+
+        if (!emailResponse.ok) {
+          console.warn('Email sending failed, but registration was successful')
+        } else {
+          console.log('Confirmation email sent successfully')
+        }
+      } catch (emailError) {
+        console.warn('Email sending failed:', emailError)
+        // Don't fail the registration if email fails
+      }
+      
+      // Redirect to success page
+      router.push(`/events/${event.id}/success`)
+    } catch (error) {
+      console.error('Registration error:', error)
+      alert('Registration failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <RegistrationForm
       event={event}
       userEmail={user.email || ''}
-      onSubmit={handleRegistrationSubmit}
+      onSubmit={handleRegistration}
       loading={submitting}
     />
   )

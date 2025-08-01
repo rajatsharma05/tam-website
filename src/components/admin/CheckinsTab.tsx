@@ -180,7 +180,7 @@ export default function CheckinsTab({
                   ) : (
                     <>
                       <p className="text-sm font-medium text-gray-700">Registrant</p>
-                      <p className="text-gray-900">{checkin.registrantName}</p>
+                      <p className="text-gray-900">{checkin.memberName || checkin.registrantName || (checkin as unknown as { name?: string }).name || 'Unknown'}</p>
                       <p className="text-sm text-gray-600">Roll No: {checkin.rollNumber}</p>
                       <p className="text-sm text-gray-600">Dept & Section: {checkin.departmentSection}</p>
                       <p className="text-sm text-gray-600">{checkin.email}</p>

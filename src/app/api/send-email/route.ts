@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       console.error('Email credentials not configured')
       return NextResponse.json({ 
-        error: 'Email service not configured. Please check EMAIL_USER and EMAIL_PASS in .env.local' 
+        error: 'Email service not configured. Please check EMAIL_USER and EMAIL_PASS in .env.local. See EMAIL_SETUP.md for setup instructions.' 
       }, { status: 500 })
     }
 

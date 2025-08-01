@@ -170,7 +170,7 @@ export default function RegistrationsTab({
                     ) : (
                       <>
                         <p className="text-sm font-medium text-gray-700">Registrant</p>
-                        <p className="text-gray-900">{registration.registrantName}</p>
+                        <p className="text-gray-900">{registration.registrantName || (registration as unknown as { name?: string }).name || 'Unknown'}</p>
                         <p className="text-sm text-gray-600">{registration.email}</p>
                         <p className="text-sm text-gray-600">{registration.phone}</p>
                       </>

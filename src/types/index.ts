@@ -15,6 +15,7 @@ export interface Event {
   teamType?: 'individual' | 'team';
   minTeamSize?: number;
   maxTeamSize?: number;
+  price?: number; // Price in INR
 }
 
 export interface Registration {
@@ -87,4 +88,6 @@ export interface CheckinResult {
   };
   error?: string;
   excelData?: string;
-} 
+}
+
+ 

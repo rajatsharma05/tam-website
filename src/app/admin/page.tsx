@@ -93,19 +93,33 @@ export default function AdminPage() {
     time: string
     location: string
     capacity: number
+    price?: number
+    posterUrl?: string
+    teamType?: 'individual' | 'team'
+    minTeamSize?: number
+    maxTeamSize?: number
   }) => {
     try {
       // setError('') // Original code had this line commented out
-      await addDoc(collection(db, 'events'), {
-        ...eventData,
+      
+      // Filter out undefined values to prevent Firestore errors
+      const cleanEventData = Object.fromEntries(
+        Object.entries(eventData).filter(([, value]) => value !== undefined)
+      )
+      
+      const eventDoc = {
+        ...cleanEventData,
         registeredCount: 0,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
-      })
+      }
+      
+      await addDoc(collection(db, 'events'), eventDoc)
       await fetchData()
-    } catch {
-      console.error('Error adding event:')
+    } catch (error) {
+      console.error('Error adding event:', error)
+      alert(`Failed to add event: ${error instanceof Error ? error.message : 'Unknown error'}`)
       // setError('Failed to add event. Please try again.') // Original code had this line commented out
     }
   }
@@ -158,18 +172,24 @@ export default function AdminPage() {
     setExporting(true)
     try {
       const filtered = checkins.filter((c: Checkin) => c.eventId === selectedEventId)
-      const data = filtered.map((c: Checkin) => ({
-        'Event Name': c.eventName,
-        'Registrant Name': c.memberName || c.registrantName,
-        'Roll Number': c.rollNumber,
-        'Department & Section': c.departmentSection,
-        'Email': c.email || c.teamLeaderEmail,
-        'Phone': c.phone,
-        'Check-in Time': c.checkInTime ? convertFirestoreTimestamp(c.checkInTime).toLocaleString() : '',
-        'QR Code': c.qrCode,
-        'Team Name': c.teamName || '',
-        'Team Leader Email': c.teamLeaderEmail || '',
-      }))
+      
+      const data = filtered.map((c: Checkin) => {
+        // Handle different name field structures
+        const registrantName = c.memberName || c.registrantName || (c as unknown as { name?: string }).name || 'Unknown'
+        
+        return {
+          'Event Name': c.eventName,
+          'Registrant Name': registrantName,
+          'Roll Number': c.rollNumber,
+          'Department & Section': c.departmentSection,
+          'Email': c.email || c.teamLeaderEmail || '',
+          'Phone': c.phone,
+          'Check-in Time': c.checkInTime ? convertFirestoreTimestamp(c.checkInTime).toLocaleString() : '',
+          'QR Code': c.qrCode,
+          'Team Name': c.teamName || '',
+          'Team Leader Email': c.teamLeaderEmail || '',
+        }
+      })
       const worksheet = XLSX.utils.json_to_sheet(data)
       const workbook = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Check-ins')
@@ -196,6 +216,7 @@ export default function AdminPage() {
     try {
       const event = events.find(e => e.id === selectedEventId)
       const filtered = registrations.filter((r: Registration) => r.eventId === selectedEventId)
+      
       let data: object[] = []
       if (event && event.teamType === 'team') {
         // Group by teamName, flatten members
@@ -216,18 +237,22 @@ export default function AdminPage() {
           }
         })
       } else {
-        data = filtered.map((r: Registration) => ({
-          'Event Name': r.eventName,
-          'Registrant Name': r.registrantName,
-          'Roll Number': r.rollNumber,
-          'Department & Section': r.departmentSection,
-          'Email': r.email,
-          'Phone': r.phone,
-          'Registration Time': r.createdAt
-            ? convertFirestoreTimestamp(r.createdAt).toLocaleString()
-            : '',
-          'QR Code': r.qrCode
-        }))
+        data = filtered.map((r: Registration) => {
+          const registrantName = r.registrantName || (r as unknown as { name?: string }).name || 'Unknown'
+          
+          return {
+            'Event Name': r.eventName,
+            'Registrant Name': registrantName,
+            'Roll Number': r.rollNumber,
+            'Department & Section': r.departmentSection,
+            'Email': r.email,
+            'Phone': r.phone,
+            'Registration Time': r.createdAt
+              ? convertFirestoreTimestamp(r.createdAt).toLocaleString()
+              : '',
+            'QR Code': r.qrCode
+          }
+        })
       }
       const worksheet = XLSX.utils.json_to_sheet(data)
       const workbook = XLSX.utils.book_new()

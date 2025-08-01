@@ -35,6 +35,9 @@ export default function RegistrationForm({ event, userEmail, onSubmit, loading }
   ])
   const [teamLeaderEmail, setTeamLeaderEmail] = useState('')
 
+  // Form validation state
+  const [formError, setFormError] = useState('')
+
   const handleTeamMemberChange = (idx: number, field: string, value: string) => {
     setTeamMembers(members => members.map((m, i) => i === idx ? { ...m, [field]: value } : m))
   }
@@ -49,19 +52,48 @@ export default function RegistrationForm({ event, userEmail, onSubmit, loading }
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const validateForm = () => {
     if (isTeamEvent) {
       // Validate team size and required fields
-      if (teamMembers.length < minTeamSize || teamMembers.length > maxTeamSize) return alert(`Team size must be between ${minTeamSize} and ${maxTeamSize}`)
-      if (!teamName.trim()) return alert('Team name is required')
-      if (!teamLeaderEmail.trim()) return alert('Team leader email is required')
+      if (teamMembers.length < minTeamSize || teamMembers.length > maxTeamSize) {
+        setFormError(`Team size must be between ${minTeamSize} and ${maxTeamSize}`)
+        return false
+      }
+      if (!teamName.trim()) {
+        setFormError('Team name is required')
+        return false
+      }
+      if (!teamLeaderEmail.trim()) {
+        setFormError('Team leader email is required')
+        return false
+      }
       for (const member of teamMembers) {
         if (!member.name || !member.rollNumber || !member.departmentSection || !member.phone) {
-          return alert('All team member fields are required')
+          setFormError('All team member fields are required')
+          return false
         }
       }
-      onSubmit({ teamName, teamLeaderEmail, teamMembers })
+    } else {
+      if (!formData.name || !formData.rollNumber || !formData.departmentSection || !formData.phone) {
+        setFormError('All fields are required')
+        return false
+      }
+    }
+    return true
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormError('')
+    
+    if (!validateForm()) return
+
+    if (isTeamEvent) {
+      onSubmit({
+        teamName,
+        teamMembers,
+        teamLeaderEmail
+      })
     } else {
       onSubmit(formData)
     }
@@ -111,6 +143,14 @@ export default function RegistrationForm({ event, userEmail, onSubmit, loading }
                   <span className="font-medium text-gray-700">Available Spots:</span>
                   <p className="text-gray-600">{event.capacity - event.registeredCount} remaining</p>
                 </div>
+                {event.price && (
+                  <div className="text-left md:col-span-2">
+                    <span className="font-medium text-gray-700">Registration Fee:</span>
+                    <p className="text-gray-600">
+                      ₹{event.price} {isTeamEvent ? `per team member (${teamMembers.length} members = ₹${event.price * teamMembers.length})` : 'per person'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -287,25 +327,29 @@ export default function RegistrationForm({ event, userEmail, onSubmit, loading }
                   </div>
                 </>
               )}
+
+              {formError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{formError}</p>
+                </div>
+              )}
+
               <div className="pt-4">
                 <Button 
                   type="submit" 
                   className="w-full btn-primary py-4 text-lg font-semibold" 
                   disabled={loading}
                 >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                      Processing Registration...
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Confirm Registration
-                    </div>
-                  )}
+                  <div className="flex items-center">
+                    {event.price ? (
+                      <>
+                        <span className="text-white font-bold text-lg mr-2">₹</span>
+                        {isTeamEvent ? `Pay ₹${event.price * teamMembers.length} & Register` : `Pay ₹${event.price} & Register`}
+                      </>
+                    ) : (
+                      'Confirm Registration'
+                    )}
+                  </div>
                 </Button>
               </div>
             </form>

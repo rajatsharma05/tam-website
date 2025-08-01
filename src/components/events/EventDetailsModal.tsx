@@ -85,6 +85,20 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
                   return event.time;
                 })()}
               </span>
+              {event.price !== undefined && event.price > 0 && (
+                <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1.5 rounded-full">
+                  <span className="text-green-600 font-bold">₹</span>
+                  ₹{event.price}
+                </span>
+              )}
+              {event.price === 0 && (
+                <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Free
+                </span>
+              )}
             </div>
             <hr className="my-3 border-gray-200/70" />
             <div className="text-base text-gray-700 whitespace-pre-line mb-4 leading-relaxed">{event.description}</div>
@@ -190,6 +204,20 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
                   return event.time;
                 })()}
               </span>
+              {event.price !== undefined && event.price > 0 && (
+                <span className="inline-flex items-center gap-2 bg-green-100/80 backdrop-blur-sm text-green-800 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-sm border border-green-200/50">
+                  <span className="text-green-600 font-bold">₹</span>
+                  ₹{event.price}
+                </span>
+              )}
+              {event.price === 0 && (
+                <span className="inline-flex items-center gap-2 bg-blue-100/80 backdrop-blur-sm text-blue-800 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-sm border border-blue-200/50">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Free
+                </span>
+              )}
             </div>
 
             {/* Divider for better visibility */}
