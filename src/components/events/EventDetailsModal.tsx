@@ -68,15 +68,15 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
                 {event.registeredCount >= event.capacity ? "Full" : `${event.capacity - event.registeredCount} spots left`}
               </span>
               <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full">
-                <CalendarIcon className="w-4 h-4 text-blue-600" />
+                <CalendarIcon className="w-4 h-4 text-gray-700" />
                 {new Date(event.date).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </span>
               <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full">
-                <MapPinIcon className="w-4 h-4 text-blue-600" />
+                <MapPinIcon className="w-4 h-4 text-gray-700" />
                 {event.location}
               </span>
               <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full">
-                <ClockIcon className="w-4 h-4 text-blue-600" />
+                <ClockIcon className="w-4 h-4 text-gray-700" />
                 {(() => {
                   const date = new Date(`1970-01-01T${event.time}`);
                   if (!isNaN(date.getTime())) {
@@ -109,7 +109,7 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
           <Link href={`/events/${event.id}/register`} passHref legacyBehavior>
             <Button
               size="lg"
-              className="w-full max-w-md px-0 py-4 text-lg font-semibold rounded-xl shadow-lg bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full max-w-md px-0 py-4 text-lg font-semibold rounded-xl shadow-lg bg-gray-900 hover:bg-gray-800 text-white transition-all duration-200 focus:ring-2 focus:ring-gray-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={event.registeredCount >= event.capacity}
             >
               {event.registeredCount >= event.capacity ? "Event Full" : "Register Now"}
@@ -151,7 +151,7 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
             <Link href={`/events/${event.id}/register`} passHref legacyBehavior>
               <Button
                 size="lg"
-                className="w-full px-0 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold rounded-xl lg:rounded-2xl shadow-lg bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none backdrop-blur-sm border border-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-0 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold rounded-xl lg:rounded-2xl shadow-lg bg-gray-900 hover:bg-gray-800 text-white transition-all duration-200 focus:ring-2 focus:ring-gray-400 focus:outline-none backdrop-blur-sm border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={event.registeredCount >= event.capacity}
               >
                 {event.registeredCount >= event.capacity ? "Event Full" : "Register Now"}
@@ -180,7 +180,7 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
               </span>
 
               <span className="inline-flex items-center gap-2 bg-gray-100/80 backdrop-blur-sm text-gray-800 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-sm border border-gray-200/50">
-                <CalendarIcon className="w-4 h-4 text-blue-600" />
+                <CalendarIcon className="w-4 h-4 text-gray-700" />
                 {new Date(event.date).toLocaleDateString("en-US", {
                   weekday: "long",
                   year: "numeric",
@@ -190,12 +190,12 @@ export default function EventDetailsModal({ event, open, onClose }: EventDetails
               </span>
 
               <span className="inline-flex items-center gap-2 bg-gray-100/80 backdrop-blur-sm text-gray-800 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-sm border border-gray-200/50">
-                <MapPinIcon className="w-4 h-4 text-blue-600" />
+                <MapPinIcon className="w-4 h-4 text-gray-700" />
                 {event.location}
               </span>
 
               <span className="inline-flex items-center gap-2 bg-gray-100/80 backdrop-blur-sm text-gray-800 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-sm border border-gray-200/50">
-                <ClockIcon className="w-4 h-4 text-blue-600" />
+                <ClockIcon className="w-4 h-4 text-gray-700" />
                 {(() => {
                   const date = new Date(`1970-01-01T${event.time}`);
                   if (!isNaN(date.getTime())) {

@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase'
 import { Event } from '@/types'
 import { useAuth } from '@/components/auth/AuthProvider'
 import RegistrationForm from '@/components/events/RegistrationForm'
+import { Button } from '@/components/ui/button'
 
 export default function EventRegistrationPage() {
   const params = useParams()
@@ -55,12 +56,13 @@ export default function EventRegistrationPage() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
           <p className="text-gray-600 mb-4">Please sign in to register for this event.</p>
-          <button
+          <Button
             onClick={() => router.push('/auth')}
-            className="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700"
+            variant="default"
+            className="px-6 py-2 mt-2"
           >
             Sign In
-          </button>
+          </Button>
         </div>
       </div>
     )

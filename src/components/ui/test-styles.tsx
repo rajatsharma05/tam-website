@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './card'
 
 export default function TestStyles() {
   return (
-    <div className="p-8 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div className="p-8 gradient-primary min-h-screen">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
           <span className="text-gradient">TAM</span> Style Test

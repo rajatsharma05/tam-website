@@ -152,9 +152,8 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary to-purple-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative max-w-4xl mx-auto text-center text-white">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
+        <div className="relative max-w-4xl mx-auto text-center text-black">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Get Started?</h2>
           <p className="text-xl mb-8 opacity-90">Join us in exploring the future of technology</p>
           <div className="flex justify-center">
