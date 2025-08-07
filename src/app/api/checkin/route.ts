@@ -80,6 +80,12 @@ export async function POST(request: NextRequest) {
             isCheckedIn: true,
             qrCode: registration.qrCode,
             teamIndex: idx + 1,
+            // Include payment information
+            paymentMethod: registration.paymentMethod || 'N/A',
+            paymentStatus: registration.paymentStatus || 'N/A',
+            paymentAmount: registration.paymentAmount || 0,
+            // Include referral code
+            referralCode: registration.referralCode || 'N/A',
           };
           transaction.set(checkinRef, checkinData);
           checkinIds.push(checkinRef.id);
@@ -100,7 +106,13 @@ export async function POST(request: NextRequest) {
           phone: registration.phone,
           qrCode: registration.qrCode,
           checkInTime: new Date(),
-          isCheckedIn: true
+          isCheckedIn: true,
+          // Include payment information
+          paymentMethod: registration.paymentMethod || 'N/A',
+          paymentStatus: registration.paymentStatus || 'N/A',
+          paymentAmount: registration.paymentAmount || 0,
+          // Include referral code
+          referralCode: registration.referralCode || 'N/A',
         }
         const checkinRef = doc(collection(db, 'checkins'))
         transaction.set(checkinRef, checkinData)

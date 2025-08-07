@@ -40,6 +40,14 @@ export interface Registration {
     departmentSection: string;
     phone: string;
   }>;
+  // Payment support
+  paymentMethod?: 'online' | 'cash';
+  paymentStatus?: 'pending' | 'approved' | 'rejected';
+  paymentAmount?: number;
+  paymentApprovedAt?: Date | { seconds: number } | string;
+  paymentApprovedBy?: string;
+  // Referral tracking
+  referralCode?: string;
 }
 
 export interface Checkin {
@@ -58,6 +66,12 @@ export interface Checkin {
   memberName?: string;
   teamName?: string;
   teamLeaderEmail?: string;
+  // Payment support
+  paymentMethod?: 'online' | 'cash' | 'N/A';
+  paymentStatus?: 'pending' | 'approved' | 'rejected' | 'N/A';
+  paymentAmount?: number;
+  // Referral tracking
+  referralCode?: string;
 }
 
 export interface User {

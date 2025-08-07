@@ -33,6 +33,8 @@ export default function RegistrationsTab({
   onPrevPage
 }: RegistrationsTabProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  
+  // Apply search filter to registrations (registrations are already filtered for approved payments)
   const filteredRegistrations = registrations.filter((r) =>
     (r.registrantName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,6 +186,56 @@ export default function RegistrationsTab({
                     <p className="text-sm text-gray-600 mt-2">
                       Status: {registration.isCheckedIn ? 'Checked In' : 'Not Checked In'}
                     </p>
+                    
+                    {/* Referral Code */}
+                    {registration.referralCode && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium text-gray-700">Referral Code</p>
+                        <p className="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">
+                          {registration.referralCode}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Payment Status Indicator */}
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Payment</p>
+                      <div className="flex items-center gap-2">
+                        {registration.paymentMethod === 'online' ? (
+                          <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Online
+                          </div>
+                        ) : registration.paymentMethod === 'cash' ? (
+                          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                            registration.paymentStatus === 'approved' 
+                              ? 'bg-blue-100 text-blue-800'
+                              : registration.paymentStatus === 'pending'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                            Cash {registration.paymentStatus && `(${registration.paymentStatus})`}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Unknown
+                          </div>
+                        )}
+                        {registration.paymentAmount && (
+                          <span className="text-sm text-gray-600">
+                            ₹{registration.paymentAmount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>

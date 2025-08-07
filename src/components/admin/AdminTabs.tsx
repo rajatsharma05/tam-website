@@ -4,13 +4,20 @@ import { ReactNode } from 'react'
 import Logo from '@/components/ui/Logo'
 
 interface AdminTabsProps {
-  activeTab: 'events' | 'registrations' | 'checkins'
-  onTabChange: (tab: 'events' | 'registrations' | 'checkins') => void
+  activeTab: 'events' | 'registrations' | 'checkins' | 'cashPayments'
+  onTabChange: (tab: 'events' | 'registrations' | 'checkins' | 'cashPayments') => void
   children: ReactNode
   totalRegistrations?: number
   totalCheckins?: number
   totalEvents?: number
+  totalCashPayments?: number
   selectedEventName?: string
+  paymentStatusBreakdown?: {
+    online: number
+    cashApproved: number
+    cashPending: number
+    cashRejected: number
+  }
 }
 
 export default function AdminTabs({ 
@@ -20,7 +27,9 @@ export default function AdminTabs({
   totalRegistrations = 0, 
   totalCheckins = 0, 
   totalEvents = 0,
-  selectedEventName = ''
+  totalCashPayments = 0,
+  selectedEventName = '',
+  paymentStatusBreakdown
 }: AdminTabsProps) {
   // Get the relevant statistic based on active tab
   const getStatistic = () => {
@@ -45,6 +54,13 @@ export default function AdminTabs({
           count: totalCheckins,
           icon: 'checkins',
           color: 'purple'
+        }
+      case 'cashPayments':
+        return {
+          title: 'Pending Cash Payments',
+          count: totalCashPayments,
+          icon: 'cashPayments',
+          color: 'orange'
         }
       default:
         return null
@@ -73,6 +89,12 @@ export default function AdminTabs({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )
+      case 'cashPayments':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+          </svg>
+        )
       default:
         return null
     }
@@ -86,6 +108,8 @@ export default function AdminTabs({
         return 'bg-green-100 text-green-600'
       case 'purple':
         return 'bg-purple-100 text-purple-600'
+      case 'orange':
+        return 'bg-orange-100 text-orange-600'
       default:
         return 'bg-gray-100 text-gray-600'
     }
@@ -103,9 +127,9 @@ export default function AdminTabs({
           {/* Single Statistic Display */}
           {statistic && (
             <div className="mb-8">
-              <div className="max-w-md mx-auto">
+              <div className="max-w-4xl mx-auto">
                 <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center mb-6">
                     <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${getColorClasses(statistic.color)} mr-6`}>
                       {getIcon(statistic.icon)}
                     </div>
@@ -114,6 +138,51 @@ export default function AdminTabs({
                       <p className="text-5xl font-bold text-gray-900">{statistic.count}</p>
                     </div>
                   </div>
+                  
+                  {/* Payment Status Indicators */}
+                  {paymentStatusBreakdown && (activeTab === 'registrations' || activeTab === 'cashPayments') && (
+                    <div className="border-t border-gray-100 pt-6">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-4 text-center">Payment Status Breakdown</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="text-2xl font-bold text-green-600">{paymentStatusBreakdown.online}</div>
+                          </div>
+                          <div className="text-xs text-green-700 font-medium">Online</div>
+                        </div>
+                        <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                            <div className="text-2xl font-bold text-blue-600">{paymentStatusBreakdown.cashApproved}</div>
+                          </div>
+                          <div className="text-xs text-blue-700 font-medium">Cash Approved</div>
+                        </div>
+                        <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg className="w-5 h-5 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="text-2xl font-bold text-orange-600">{paymentStatusBreakdown.cashPending}</div>
+                          </div>
+                          <div className="text-xs text-orange-700 font-medium">Cash Pending</div>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <div className="text-2xl font-bold text-red-600">{paymentStatusBreakdown.cashRejected}</div>
+                          </div>
+                          <div className="text-xs text-red-700 font-medium">Cash Rejected</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -165,6 +234,21 @@ export default function AdminTabs({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Check-ins
+                  </div>
+                </button>
+                <button
+                  onClick={() => onTabChange('cashPayments')}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    activeTab === 'cashPayments'
+                      ? 'bg-primary text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                    Cash Payments
                   </div>
                 </button>
               </div>

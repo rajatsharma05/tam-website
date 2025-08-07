@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useRouter } from 'next/navigation'
-import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, limit, startAfter, where, QueryDocumentSnapshot, DocumentData, writeBatch } from 'firebase/firestore'
+import { collection, getDocs, getDoc, addDoc, updateDoc, doc, query, orderBy, limit, startAfter, where, QueryDocumentSnapshot, DocumentData, writeBatch } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Event, Registration, Checkin } from '@/types'
 import { convertFirestoreTimestamp } from '@/lib/utils'
@@ -12,14 +12,16 @@ import AdminTabs from '@/components/admin/AdminTabs'
 import EventsTab from '@/components/admin/EventsTab'
 import RegistrationsTab from '@/components/admin/RegistrationsTab'
 import CheckinsTab from '@/components/admin/CheckinsTab'
+import CashPaymentsTab from '@/components/admin/CashPaymentsTab'
 
 export default function AdminPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>([])
+  const [allRegistrations, setAllRegistrations] = useState<Registration[]>([]) // Unfiltered registrations for cash payments
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'events' | 'registrations' | 'checkins'>('events')
+  const [activeTab, setActiveTab] = useState<'events' | 'registrations' | 'checkins' | 'cashPayments'>('events')
   const [checkins, setCheckins] = useState<Checkin[]>([])
   const [exporting, setExporting] = useState(false)
   const [selectedEventId, setSelectedEventId] = useState<string>('')
@@ -33,6 +35,21 @@ export default function AdminPage() {
   const [checkinsLastDoc, setCheckinsLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
   const [checkinsHasNext, setCheckinsHasNext] = useState(false)
   const CHECKINS_PAGE_SIZE = 20
+  const [processingPayment, setProcessingPayment] = useState(false)
+
+  // Calculate payment status breakdown for the selected event
+  const getPaymentStatusBreakdown = () => {
+    if (!selectedEventId) return undefined
+    
+    const eventRegistrations = allRegistrations.filter(r => r.eventId === selectedEventId)
+    
+    return {
+      online: eventRegistrations.filter(r => r.paymentMethod === 'online' && r.paymentStatus === 'approved').length,
+      cashApproved: eventRegistrations.filter(r => r.paymentMethod === 'cash' && r.paymentStatus === 'approved').length,
+      cashPending: eventRegistrations.filter(r => r.paymentMethod === 'cash' && r.paymentStatus === 'pending').length,
+      cashRejected: eventRegistrations.filter(r => r.paymentMethod === 'cash' && r.paymentStatus === 'rejected').length
+    }
+  }
 
   useEffect(() => {
     if (user?.email !== 'admin@tam.com') {
@@ -186,8 +203,12 @@ export default function AdminPage() {
           'Phone': c.phone,
           'Check-in Time': c.checkInTime ? convertFirestoreTimestamp(c.checkInTime).toLocaleString() : '',
           'QR Code': c.qrCode,
+          'Referral Code': c.referralCode || 'N/A',
           'Team Name': c.teamName || '',
           'Team Leader Email': c.teamLeaderEmail || '',
+          'Payment Method': c.paymentMethod || (c.paymentStatus ? 'Unknown' : 'N/A'),
+          'Payment Status': c.paymentStatus || 'N/A',
+          'Payment Amount': c.paymentAmount ? `₹${c.paymentAmount}` : 'N/A'
         }
       })
       const worksheet = XLSX.utils.json_to_sheet(data)
@@ -215,7 +236,17 @@ export default function AdminPage() {
     setExporting(true)
     try {
       const event = events.find(e => e.id === selectedEventId)
-      const filtered = registrations.filter((r: Registration) => r.eventId === selectedEventId)
+      // Only include approved registrations (not pending cash payments)
+      const filtered = registrations.filter((r: Registration) => 
+        r.eventId === selectedEventId && !(r.paymentStatus === 'pending' && r.paymentMethod === 'cash')
+      )
+      
+      console.log('Exporting registrations:', {
+        totalRegistrations: registrations.length,
+        filteredRegistrations: filtered.length,
+        selectedEventId,
+        sampleRegistration: filtered[0]
+      })
       
       let data: object[] = []
       if (event && event.teamType === 'team') {
@@ -232,6 +263,10 @@ export default function AdminPage() {
                 'Phone': member.phone,
                 'Registration Time': r.createdAt ? convertFirestoreTimestamp(r.createdAt).toLocaleString() : '',
                 'QR Code': r.qrCode || '',
+                'Referral Code': r.referralCode || 'N/A',
+                'Payment Method': r.paymentMethod || (r.paymentStatus ? 'Unknown' : 'N/A'),
+                'Payment Status': r.paymentStatus || 'N/A',
+                'Payment Amount': r.paymentAmount ? `₹${r.paymentAmount}` : 'N/A'
               })
             })
           }
@@ -250,7 +285,11 @@ export default function AdminPage() {
             'Registration Time': r.createdAt
               ? convertFirestoreTimestamp(r.createdAt).toLocaleString()
               : '',
-            'QR Code': r.qrCode
+            'QR Code': r.qrCode,
+            'Referral Code': r.referralCode || 'N/A',
+            'Payment Method': r.paymentMethod || (r.paymentStatus ? 'Unknown' : 'N/A'),
+            'Payment Status': r.paymentStatus || 'N/A',
+            'Payment Amount': r.paymentAmount ? `₹${r.paymentAmount}` : 'N/A'
           }
         })
       }
@@ -272,6 +311,110 @@ export default function AdminPage() {
       // setError('Failed to export registrations. Please try again.') // Original code had this line commented out
     } finally {
       setExporting(false)
+    }
+  }
+
+  const handleApprovePayment = async (registrationId: string) => {
+    setProcessingPayment(true)
+    try {
+      const registrationRef = doc(db, 'registrations', registrationId)
+      const registrationDoc = await getDoc(registrationRef)
+      
+      if (!registrationDoc.exists()) {
+        throw new Error('Registration not found')
+      }
+      
+      const registration = registrationDoc.data() as Registration
+      
+      // Update payment status to approved
+      await updateDoc(registrationRef, {
+        paymentStatus: 'approved',
+        paymentApprovedAt: new Date(),
+        paymentApprovedBy: user?.email || 'admin'
+      })
+      
+      // Update event capacity for approved cash payments
+      const eventRef = doc(db, 'events', registration.eventId)
+      const increment = 1 // For team events, count as 1 team registration, not individual members
+      await updateDoc(eventRef, {
+        registeredCount: (events.find(e => e.id === registration.eventId)?.registeredCount || 0) + increment
+      })
+      
+      // Send confirmation email
+      try {
+        const emailData = {
+          email: registration.email,
+          eventName: registration.eventName,
+          qrCode: registration.qrCode,
+          ...(registration.teamName 
+            ? { teamName: registration.teamName }
+            : { registrantName: registration.registrantName }
+          )
+        }
+
+        const emailResponse = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailData)
+        })
+
+        if (!emailResponse.ok) {
+          console.warn('Email sending failed, but payment was approved')
+        } else {
+          console.log('Confirmation email sent successfully')
+        }
+      } catch (emailError) {
+        console.warn('Email sending failed:', emailError)
+        // Don't fail the approval if email fails
+      }
+      
+      // Refresh data
+      await fetchData()
+      // Refresh registrations for the current event
+      if (selectedEventId) {
+        await fetchPaginatedRegistrations('next', true)
+      }
+    } catch (error) {
+      console.error('Error approving payment:', error)
+      alert('Failed to approve payment. Please try again.')
+    } finally {
+      setProcessingPayment(false)
+    }
+  }
+
+  const handleRejectPayment = async (registrationId: string) => {
+    setProcessingPayment(true)
+    try {
+      const registrationRef = doc(db, 'registrations', registrationId)
+      const registrationDoc = await getDoc(registrationRef)
+      
+      if (!registrationDoc.exists()) {
+        throw new Error('Registration not found')
+      }
+      
+      // Update payment status to rejected
+      await updateDoc(registrationRef, {
+        paymentStatus: 'rejected',
+        paymentApprovedAt: new Date(),
+        paymentApprovedBy: user?.email || 'admin'
+      })
+      
+      // Note: We don't update event capacity for rejected payments since they were never counted
+      // in the first place (pending cash payments don't affect capacity)
+      
+      // Refresh data
+      await fetchData()
+      // Refresh registrations for the current event
+      if (selectedEventId) {
+        await fetchPaginatedRegistrations('next', true)
+      }
+    } catch (error) {
+      console.error('Error rejecting payment:', error)
+      alert('Failed to reject payment. Please try again.')
+    } finally {
+      setProcessingPayment(false)
     }
   }
 
@@ -301,7 +444,25 @@ export default function AdminPage() {
       snapshot.forEach((doc) => {
         data.push({ id: doc.id, ...doc.data() } as Registration)
       })
-      setRegistrations(data)
+      
+      // Store all registrations (unfiltered) for cash payments tab
+      setAllRegistrations(data)
+      
+      // Filter out pending cash payments - only show approved registrations
+      const approvedData = data.filter((r) => !(r.paymentStatus === 'pending' && r.paymentMethod === 'cash'))
+      
+      console.log('Registration filtering:', {
+        totalFetched: data.length,
+        approvedCount: approvedData.length,
+        sampleData: data.slice(0, 2).map(r => ({
+          id: r.id,
+          paymentMethod: r.paymentMethod,
+          paymentStatus: r.paymentStatus,
+          isPendingCash: r.paymentStatus === 'pending' && r.paymentMethod === 'cash'
+        }))
+      })
+      
+      setRegistrations(approvedData)
       setRegistrationsLastDoc(snapshot.docs[snapshot.docs.length - 1] || null)
       setRegistrationsHasNext(snapshot.size === REGISTRATIONS_PAGE_SIZE)
       setRegistrationPage(reset ? 1 : (direction === 'next' ? registrationPage + 1 : registrationPage - 1))
@@ -397,9 +558,11 @@ export default function AdminPage() {
           activeTab={activeTab} 
           onTabChange={setActiveTab}
           totalEvents={events.length}
-          totalRegistrations={registrations.filter(r => r.eventId === selectedEventId).length}
+          totalRegistrations={registrations.filter(r => r.eventId === selectedEventId && !(r.paymentStatus === 'pending' && r.paymentMethod === 'cash')).length}
           totalCheckins={checkins.filter(c => c.eventId === selectedEventId).length}
+          totalCashPayments={allRegistrations.filter(r => r.eventId === selectedEventId && r.paymentMethod === 'cash' && r.paymentStatus === 'pending').length}
           selectedEventName={events.find(e => e.id === selectedEventId)?.title || ''}
+          paymentStatusBreakdown={getPaymentStatusBreakdown()}
         >
           {activeTab === 'events' && (
             <EventsTab
@@ -439,6 +602,18 @@ export default function AdminPage() {
               hasNext={checkinsHasNext}
               onNextPage={() => fetchPaginatedCheckins('next')}
               onPrevPage={() => setCheckinPage((p) => Math.max(1, p - 1))}
+            />
+          )}
+          
+          {activeTab === 'cashPayments' && (
+            <CashPaymentsTab
+              registrations={allRegistrations}
+              events={events}
+              selectedEventId={selectedEventId}
+              onEventSelect={setSelectedEventId}
+              onApprovePayment={handleApprovePayment}
+              onRejectPayment={handleRejectPayment}
+              loading={processingPayment}
             />
           )}
         </AdminTabs>

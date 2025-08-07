@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { doc, getDoc, addDoc, collection } from 'firebase/firestore'
+import { doc, getDoc, addDoc, collection, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Event } from '@/types'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -87,8 +87,8 @@ export default function EventRegistrationPage() {
 
   const handleRegistration = async (
     formData:
-      | { name: string; rollNumber: string; departmentSection: string; phone: string }
-      | { teamName: string; teamMembers: Array<{ name: string; rollNumber: string; departmentSection: string; phone: string }>; teamLeaderEmail: string }
+      | { name: string; rollNumber: string; departmentSection: string; phone: string; paymentMethod: 'online' | 'cash'; referralCode?: string }
+      | { teamName: string; teamMembers: Array<{ name: string; rollNumber: string; departmentSection: string; phone: string }>; teamLeaderEmail: string; paymentMethod: 'online' | 'cash'; referralCode?: string }
   ) => {
     if (!event || !user) return
 
@@ -96,6 +96,10 @@ export default function EventRegistrationPage() {
     try {
       const qrCode = `${event.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
+      // Determine if this is a team event and calculate payment amount
+      const isTeamEvent = event.teamType === 'team'
+      const paymentAmount = event.price ? event.price : 0
+
       // Prepare registration data with correct field names
       const registrationData = {
         eventId: event.id,
@@ -104,6 +108,10 @@ export default function EventRegistrationPage() {
         createdAt: new Date(),
         isCheckedIn: false,
         qrCode,
+        paymentMethod: formData.paymentMethod,
+        paymentStatus: formData.paymentMethod === 'cash' ? 'pending' : 'approved',
+        paymentAmount,
+        referralCode: formData.referralCode,
         ...(('teamName' in formData) 
           ? {
               teamName: formData.teamName,
@@ -127,38 +135,47 @@ export default function EventRegistrationPage() {
       // Save registration to Firebase
       await addDoc(collection(db, 'registrations'), registrationData)
       
-      // Send confirmation email
-      try {
-        const emailData = {
-          email: user.email,
-          eventName: event.title,
-          qrCode,
-          ...(('teamName' in formData) 
-            ? { teamName: formData.teamName }
-            : { registrantName: formData.name }
-          )
-        }
-
-        const emailResponse = await fetch('/api/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(emailData)
+      // Only increment event capacity and send confirmation email for online payments (approved payments)
+      if (formData.paymentMethod === 'online') {
+        // Update event capacity for online payments
+        const eventRef = doc(db, 'events', event.id)
+        const increment = isTeamEvent ? 1 : 1 // For team events, count as 1 team registration, not individual members
+        await updateDoc(eventRef, {
+          registeredCount: event.registeredCount + increment
         })
+        
+        try {
+          const emailData = {
+            email: user.email,
+            eventName: event.title,
+            qrCode,
+            ...(('teamName' in formData) 
+              ? { teamName: formData.teamName }
+              : { registrantName: formData.name }
+            )
+          }
 
-        if (!emailResponse.ok) {
-          console.warn('Email sending failed, but registration was successful')
-        } else {
-          console.log('Confirmation email sent successfully')
+          const emailResponse = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(emailData)
+          })
+
+          if (!emailResponse.ok) {
+            console.warn('Email sending failed, but registration was successful')
+          } else {
+            console.log('Confirmation email sent successfully')
+          }
+        } catch (emailError) {
+          console.warn('Email sending failed:', emailError)
+          // Don't fail the registration if email fails
         }
-      } catch (emailError) {
-        console.warn('Email sending failed:', emailError)
-        // Don't fail the registration if email fails
       }
       
-      // Redirect to success page
-      router.push(`/events/${event.id}/success`)
+      // Redirect to success page with payment method
+      router.push(`/events/${event.id}/success?paymentMethod=${formData.paymentMethod}`)
     } catch (error) {
       console.error('Registration error:', error)
       alert('Registration failed. Please try again.')
