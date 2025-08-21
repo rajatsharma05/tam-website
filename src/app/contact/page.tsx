@@ -42,7 +42,7 @@ export default function ContactPage() {
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-gray-900 mb-6">Contact Us</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Have questions about our events? Want to collaborate? Need support? We'd love to hear from you!
+            Have questions about our events? Want to collaborate? Need support? We&apos;d love to hear from you!
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export default function ContactPage() {
                   → What events are coming up?
                 </a>
                 <a href="/refund-policy" className="block text-blue-600 hover:text-blue-700 transition-colors duration-200">
-                  → What's your refund policy?
+                  → What&apos;s your refund policy?
                 </a>
                 <a href="/about" className="block text-blue-600 hover:text-blue-700 transition-colors duration-200">
                   → Learn more about TAM
@@ -139,7 +139,7 @@ export default function ContactPage() {
             
             {submitStatus === 'success' && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-800">Thank you for your message! We'll get back to you soon.</p>
+                <p className="text-green-800">Thank you for your message! We&apos;ll get back to you soon.</p>
               </div>
             )}
 

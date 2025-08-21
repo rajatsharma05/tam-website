@@ -95,7 +95,7 @@ export default function AboutPage() {
               Our journey began when we recognized the growing gap between traditional academic curricula and the rapidly evolving technology landscape. Students were graduating with theoretical knowledge but lacked practical exposure to emerging technologies that are shaping our future.
             </p>
             <p className="text-gray-700 text-lg leading-relaxed">
-              Today, TAM stands as a testament to our commitment to bridging this gap. We've successfully organized numerous events, workshops, and hackathons, bringing together students, industry experts, and technology enthusiasts in a collaborative learning environment.
+              Today, TAM stands as a testament to our commitment to bridging this gap. We&apos;ve successfully organized numerous events, workshops, and hackathons, bringing together students, industry experts, and technology enthusiasts in a collaborative learning environment.
             </p>
           </div>
         </div>
