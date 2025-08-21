@@ -72,6 +72,17 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Legal & Information Links */}
+          <div className="mb-12">
+            <div className="flex flex-wrap justify-center gap-6 text-sm">
+              <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Terms & Conditions</Link>
+              <Link href="/refund-policy" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Refund Policy</Link>
+              <Link href="/about" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">About Us</Link>
+              <Link href="/privacy" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Privacy Policy</Link>
+              <Link href="/contact" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Contact Us</Link>
+            </div>
+          </div>
+
           {/* Copyright Notice */}
           <div className="border-t border-gray-200 pt-8">
             <div className="text-gray-500 font-mono text-sm">
