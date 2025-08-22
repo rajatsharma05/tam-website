@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { collection, getDocs, doc, runTransaction, query, where } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { adminDb } from '@/lib/firebase-admin'
 import { Registration } from '@/types'
 import { validateQRCode } from '@/lib/utils'
 
@@ -20,11 +19,11 @@ export async function POST(request: NextRequest) {
     console.log(`Processing check-in for QR code: ${trimmedQR}`)
 
     // Use a transaction to ensure atomicity
-    const result = await runTransaction(db, async (transaction) => {
+    const result = await adminDb.runTransaction(async (transaction) => {
       // Find registration by QR code
-      const registrationsRef = collection(db, 'registrations')
-      const q = query(registrationsRef, where('qrCode', '==', trimmedQR))
-      const querySnapshot = await getDocs(q)
+      const registrationsRef = adminDb.collection('registrations')
+      const q = registrationsRef.where('qrCode', '==', trimmedQR)
+      const querySnapshot = await q.get()
 
       if (querySnapshot.empty) {
         console.log(`QR code not found: ${trimmedQR}`)
@@ -43,9 +42,9 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if check-in already exists in checkins collection
-      const checkinsRef = collection(db, 'checkins')
-      const checkinQuery = query(checkinsRef, where('qrCode', '==', trimmedQR))
-      const checkinSnapshot = await getDocs(checkinQuery)
+      const checkinsRef = adminDb.collection('checkins')
+      const checkinQuery = checkinsRef.where('qrCode', '==', trimmedQR)
+      const checkinSnapshot = await checkinQuery.get()
 
       if (!checkinSnapshot.empty) {
         console.log(`Check-in record already exists: ${trimmedQR}`)
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
       console.log(`Proceeding with check-in for: ${registration.registrantName}`)
 
       // Update check-in status in registrations
-      const registrationRef = doc(db, 'registrations', registration.id)
+      const registrationRef = adminDb.collection('registrations').doc(registration.id)
       transaction.update(registrationRef, {
         isCheckedIn: true,
         checkInTime: new Date()
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
         // Team check-in: create a check-in record for each member
         const checkinIds: string[] = [];
         (registration.teamMembers as Array<{ name: string; rollNumber: string; departmentSection: string; phone: string }>).forEach((member, idx) => {
-          const checkinRef = doc(collection(db, 'checkins'));
+          const checkinRef = adminDb.collection('checkins').doc();
           const checkinData = {
             eventId: registration.eventId,
             eventName: registration.eventName,
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
           // Include referral code
           referralCode: registration.referralCode || 'N/A',
         }
-        const checkinRef = doc(collection(db, 'checkins'))
+        const checkinRef = adminDb.collection('checkins').doc()
         transaction.set(checkinRef, checkinData)
         return {
           registration,

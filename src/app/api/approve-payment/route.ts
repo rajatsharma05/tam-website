@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { adminDb } from '@/lib/firebase-admin'
 import { Registration } from '@/types'
 // Email sending is handled by /api/send-email route
 
@@ -48,10 +47,10 @@ export async function POST(request: NextRequest) {
     console.log(`Processing payment approval for registration: ${trimmedRegistrationId}`)
 
     // Get registration from Firestore
-    const registrationRef = doc(db, 'registrations', trimmedRegistrationId)
-    const registrationDoc = await getDoc(registrationRef)
+    const registrationRef = adminDb.collection('registrations').doc(trimmedRegistrationId)
+    const registrationDoc = await registrationRef.get()
 
-    if (!registrationDoc.exists()) {
+    if (!registrationDoc.exists) {
       return NextResponse.json({ 
         error: 'Registration not found' 
       }, { status: 404 })
@@ -68,22 +67,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Update payment status to approved
-    await updateDoc(registrationRef, {
+    await registrationRef.update({
       paymentStatus: 'approved',
       paymentApprovedAt: new Date(),
       paymentApprovedBy: 'admin'
     })
 
     // Update event capacity for approved cash payments
-    const eventRef = doc(db, 'events', registration.eventId)
+    const eventRef = adminDb.collection('events').doc(registration.eventId)
     const increment = 1 // For team events, count as 1 team registration, not individual members
     
     // Get current event data to update capacity
-    const eventDoc = await getDoc(eventRef)
-    if (eventDoc.exists()) {
+    const eventDoc = await eventRef.get()
+    if (eventDoc.exists) {
       const eventData = eventDoc.data()
-      await updateDoc(eventRef, {
-        registeredCount: (eventData.registeredCount || 0) + increment
+      await eventRef.update({
+        registeredCount: (eventData?.registeredCount || 0) + increment
       })
     }
 
