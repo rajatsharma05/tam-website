@@ -39,3 +39,45 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# firebase
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+firebase-debug.log.*
+firebase-debug.*.log
+firebase-debug.log.*
+
+# firebase service account keys and sensitive configs
+scripts/*.json
+scripts/service-account-key.json
+scripts/service-account-*.json
+firebase-service-account.json
+firebase-service-account-*.json
+service-account*.json
+service-account-*.json
+
+# firebase local configs
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firebase-debug.log.*
+firebase-debug.*.log
+firebase-debug.log.*
+
+# firebase emulator data
+firebase-export-*
+firebase-import-*
+firebase-debug.log
+firebase-debug.*.log
+firebase-debug.log.*
+firebase-debug.*.log
+firebase-debug.log.*
+
+# firebase hosting cache
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firebase-debug.log.*
+firebase-debug.*.log
+firebase-debug.log.*

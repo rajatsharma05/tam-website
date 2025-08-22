@@ -15,7 +15,7 @@ import CheckinsTab from '@/components/admin/CheckinsTab'
 import CashPaymentsTab from '@/components/admin/CashPaymentsTab'
 
 export default function AdminPage() {
-  const { user } = useAuth()
+  const { user, isAdmin, adminLoading } = useAuth()
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>([])
@@ -52,14 +52,21 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (user?.email !== 'admin@tam.com') {
-      router.push('/')
+    // Check if user is authenticated and has admin privileges
+    if (!user || !isAdmin) {
+      if (user && !isAdmin) {
+        // User is logged in but not admin
+        router.push('/')
+        return
+      }
+      // User is not logged in, wait for auth to complete
       return
     }
+    
     fetchData()
     fetchCheckins()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, router])
+  }, [user, isAdmin, router])
 
   const fetchData = async () => {
     try {
@@ -525,6 +532,24 @@ export default function AdminPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId])
+
+  // Show loading state while checking admin status
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Checking admin privileges...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect non-admin users
+  if (!user || !isAdmin) {
+    router.push('/')
+    return null
+  }
 
   if (loading) {
     return (

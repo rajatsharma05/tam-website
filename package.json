@@ -14,6 +14,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "firebase": "^10.7.1",
+    "firebase-admin": "^13.4.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.535.0",
     "next": "15.4.4",
