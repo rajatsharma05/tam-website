@@ -10,7 +10,7 @@ import Logo from '@/components/ui/Logo'
 import { usePathname } from 'next/navigation'
 
 export default function Header() {
-  const { user, loading } = useAuth()
+  const { user, loading, isAdmin } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
@@ -93,7 +93,7 @@ export default function Header() {
                   : 'bg-primary-600'
               }`}></span>
             </Link>
-            {user?.email === 'admin@tam.com' && (
+            {isAdmin && (
               <Link 
                 href="/admin" 
                 className={`transition-all duration-200 font-medium relative group ${
@@ -104,7 +104,7 @@ export default function Header() {
                     : 'text-gray-700 hover:text-primary-600'
                 }`}
               >
-                Admin
+                Admin Panel
                 <span className={`absolute -bottom-1 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
                   isHomePage 
                     ? isScrolled ? 'bg-primary-600' : 'bg-white'
@@ -258,7 +258,7 @@ export default function Header() {
                 </svg>
                 Events
               </Link>
-              {user?.email === 'admin@tam.com' && (
+              {isAdmin && (
                 <Link 
                   href="/admin" 
                   className={`transition-all duration-300 font-medium px-4 py-3 rounded-lg flex items-center transform hover:scale-105 hover:shadow-lg ${
@@ -273,7 +273,7 @@ export default function Header() {
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  Admin
+                  Admin Panel
                 </Link>
               )}
               {user && (
@@ -300,24 +300,24 @@ export default function Header() {
                         {user.email?.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className={`text-sm font-medium ${
-                        isHomePage 
-                          ? isScrolled 
-                            ? 'text-gray-700' 
-                            : 'text-white drop-shadow-lg'
-                          : 'text-gray-700'
-                      }`}>Welcome back!</span>
-                      <span className={`text-xs ${
-                        isHomePage 
-                          ? isScrolled 
-                            ? 'text-gray-500' 
-                            : 'text-white/80 drop-shadow-lg'
-                          : 'text-gray-500'
-                      }`}>{user.email}</span>
-                    </div>
+                                      <div className="flex flex-col">
+                    <span className={`text-sm font-medium ${
+                      isHomePage 
+                        ? isScrolled 
+                          ? 'text-gray-700' 
+                          : 'text-white drop-shadow-lg'
+                        : 'text-gray-700'
+                    }`}>Welcome back!</span>
+                    <span className={`text-xs ${
+                      isHomePage 
+                        ? isScrolled 
+                          ? 'text-gray-500' 
+                          : 'text-white/80 drop-shadow-lg'
+                        : 'text-gray-500'
+                    }`}>{user.email}</span>
                   </div>
-                  <Button 
+                </div>
+                <Button 
                     variant="outline" 
                     onClick={handleSignOut}
                     className={`w-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 backdrop-blur-sm ${
