@@ -5,16 +5,33 @@ import { Event } from '@/types'
 // GET - Fetch all events
 export async function GET() {
   try {
+    console.log('GET /api/admin/events - Starting...')
+    
+    // Test Firebase admin import
+    console.log('Testing Firebase admin import...')
+    const { adminDb } = await import('@/lib/firebase-admin')
+    console.log('Firebase admin imported successfully')
+    
+    // Test basic Firestore operation
+    console.log('Testing Firestore connection...')
     const eventsSnapshot = await adminDb.collection('events').get()
+    console.log('Firestore query successful, got', eventsSnapshot.size, 'documents')
+    
     const events: (Event & { id: string })[] = []
     
     eventsSnapshot.forEach((doc) => {
       events.push({ id: doc.id, ...doc.data() } as Event & { id: string })
     })
     
+    console.log('GET /api/admin/events - Success, returning', events.length, 'events')
     return NextResponse.json({ success: true, events })
   } catch (error) {
-    console.error('Error fetching events:', error)
+    console.error('Error in GET /api/admin/events:', error)
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    })
     return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
   }
 }
