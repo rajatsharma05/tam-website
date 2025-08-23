@@ -4,31 +4,26 @@ import { getAuth } from 'firebase-admin/auth'
 
 // Only initialize Firebase Admin in server environment
 if (typeof window !== 'undefined') {
-  throw new Error('Server-side only module')
+  throw new Error('Firebase Admin can only be used on the server side')
 }
 
-// Check if required environment variables are set (without exposing names)
-const requiredEnvVars = {
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY,
+// Check if required environment variables are set
+if (!process.env.FIREBASE_PROJECT_ID) {
+  throw new Error('Missing required environment configuration')
 }
-
-// Validate all required environment variables exist
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([, value]) => !value)
-  .map(([key]) => key)
-
-if (missingVars.length > 0) {
-  throw new Error(`Missing required environment configuration`)
+if (!process.env.FIREBASE_CLIENT_EMAIL) {
+  throw new Error('Missing required environment configuration')
+}
+if (!process.env.FIREBASE_PRIVATE_KEY) {
+  throw new Error('Missing required environment configuration')
 }
 
 // Initialize Firebase Admin SDK
 const firebaseAdminConfig = {
   credential: cert({
-    projectId: requiredEnvVars.projectId!,
-    clientEmail: requiredEnvVars.clientEmail!,
-    privateKey: requiredEnvVars.privateKey!.replace(/\\n/g, '\n'),
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
   }),
 }
 
@@ -37,16 +32,8 @@ let app
 try {
   app = getApps().length === 0 ? initializeApp(firebaseAdminConfig) : getApps()[0]
 } catch (error) {
-  // Log generic error without sensitive details
-  console.error('Firebase Admin initialization failed')
-  
-  // In development, log minimal error info
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error type:', error instanceof Error ? error.constructor.name : 'Unknown')
-    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
-  }
-  
-  throw new Error('Service initialization failed')
+  console.error('Error initializing Firebase Admin:', error)
+  throw error
 }
 
 // Export Firestore and Auth instances
