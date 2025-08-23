@@ -18,6 +18,7 @@ interface AdminTabsProps {
     cashPending: number
     cashRejected: number
   }
+  tabLoading?: boolean
 }
 
 export default function AdminTabs({ 
@@ -29,7 +30,8 @@ export default function AdminTabs({
   totalEvents = 0,
   totalCashPayments = 0,
   selectedEventName = '',
-  paymentStatusBreakdown
+  paymentStatusBreakdown,
+  tabLoading
 }: AdminTabsProps) {
   // Get the relevant statistic based on active tab
   const getStatistic = () => {
@@ -257,6 +259,16 @@ export default function AdminTabs({
         </div>
         
         <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+          {tabLoading && (
+            <div className="flex justify-center mb-6">
+              <div className="bg-white rounded-lg p-4 shadow-md">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm text-gray-600">Loading tab data...</span>
+                </div>
+              </div>
+            </div>
+          )}
           {children}
         </div>
       </div>

@@ -13,11 +13,11 @@ import CashPaymentsTab from '@/components/admin/CashPaymentsTab'
 export default function AdminPage() {
   const { user, isAdmin, adminLoading } = useAuth()
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'events' | 'registrations' | 'checkins' | 'cashPayments'>('events')
   const [events, setEvents] = useState<Event[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [allRegistrations, setAllRegistrations] = useState<Registration[]>([]) // Unfiltered registrations for cash payments
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'events' | 'registrations' | 'checkins' | 'cashPayments'>('events')
   const [checkins, setCheckins] = useState<Checkin[]>([])
   const [exporting, setExporting] = useState(false)
   const [selectedEventId, setSelectedEventId] = useState<string>('')
@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [checkinsHasNext, setCheckinsHasNext] = useState(false)
   const CHECKINS_PAGE_SIZE = 20
   const [processingPayment, setProcessingPayment] = useState(false)
+  const [tabLoading, setTabLoading] = useState(false)
 
   // Calculate payment status breakdown for the selected event
   const getPaymentStatusBreakdown = () => {
@@ -52,21 +53,21 @@ export default function AdminPage() {
     if (!user || !isAdmin) {
       if (user && !isAdmin) {
         // User is logged in but not admin
-      router.push('/')
+        router.push('/')
         return
       }
       // User is not logged in, wait for auth to complete
       return
     }
     
-    fetchData()
-    fetchCheckins()
+    // Load essential data first (events only)
+    fetchEventsOnly()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isAdmin, router])
 
-  const fetchData = async () => {
+  const fetchEventsOnly = async () => {
     try {
-      // Fetch events
+      setLoading(true)
       const eventsResponse = await fetch('/api/admin/events')
       const eventsResult = await eventsResponse.json()
       
@@ -78,11 +79,35 @@ export default function AdminPage() {
       } else {
         console.error('Error fetching events:', eventsResult.error)
       }
+    } catch (error) {
+      console.error('Error fetching events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      // Fetch all registrations for dropdown and counts
-      const registrationsResponse = await fetch('/api/admin/registrations')
-      const registrationsResult = await registrationsResponse.json()
+  const fetchData = async () => {
+    try {
+      // Use Promise.all for parallel API calls
+      const [eventsResponse, registrationsResponse] = await Promise.all([
+        fetch('/api/admin/events'),
+        fetch('/api/admin/registrations')
+      ])
       
+      const [eventsResult, registrationsResult] = await Promise.all([
+        eventsResponse.json(),
+        registrationsResponse.json()
+      ])
+      
+      if (eventsResult.success) {
+        setEvents(eventsResult.events)
+        if (eventsResult.events.length > 0 && !selectedEventId) {
+          setSelectedEventId(eventsResult.events[0].id)
+        }
+      } else {
+        console.error('Error fetching events:', eventsResult.error)
+      }
+
       if (registrationsResult.success) {
         setAllRegistrations(registrationsResult.registrations)
       } else {
@@ -90,8 +115,6 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Error fetching data:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -107,6 +130,22 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Error fetching checkins:', error)
+    }
+  }
+
+  // Load additional data only when switching to specific tabs
+  const loadTabData = async (tab: 'events' | 'registrations' | 'checkins' | 'cashPayments') => {
+    setTabLoading(true)
+    try {
+      if (tab === 'registrations' && allRegistrations.length === 0) {
+        await fetchData()
+      } else if (tab === 'checkins' && checkins.length === 0) {
+        await fetchCheckins()
+      }
+    } catch (error) {
+      console.error('Error loading tab data:', error)
+    } finally {
+      setTabLoading(false)
     }
   }
 
@@ -140,7 +179,7 @@ export default function AdminPage() {
       const result = await response.json()
       
       if (result.success) {
-      await fetchData()
+        await fetchData()
       } else {
         console.error('Error adding event:', result.error)
         alert(`Failed to add event: ${result.error}`)
@@ -167,7 +206,7 @@ export default function AdminPage() {
       const result = await response.json()
       
       if (result.success) {
-      await fetchData()
+        await fetchData()
       } else {
         console.error('Error updating event:', result.error)
         alert(`Failed to update event: ${result.error}`)
@@ -188,8 +227,8 @@ export default function AdminPage() {
         const result = await response.json()
         
         if (result.success) {
-        await fetchData()
-        await fetchCheckins()
+          await fetchData()
+          await fetchCheckins()
         } else {
           console.error('Error deleting event:', result.error)
           alert(`Failed to delete event: ${result.error}`)
@@ -414,13 +453,56 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId])
 
+  const handleTabChange = (tab: 'events' | 'registrations' | 'checkins' | 'cashPayments') => {
+    setActiveTab(tab)
+    // Load data only when switching to specific tabs
+    loadTabData(tab)
+  }
+
   // Show loading state while checking admin status
   if (adminLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Checking admin privileges...</p>
+          <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking admin privileges...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading state while fetching initial data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 animate-pulse">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-gray-200 rounded-full mr-4"></div>
+              <div className="h-10 bg-gray-200 rounded w-48"></div>
+            </div>
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-xl p-8 shadow-lg">
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-center mb-8">
+            <div className="bg-white rounded-xl p-2 shadow-lg">
+              <div className="flex space-x-2">
+                {['Events', 'Registrations', 'Check-ins', 'Cash Payments'].map((tab) => (
+                  <div key={tab} className="px-6 py-3 rounded-lg bg-gray-200 w-24"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-8 shadow-lg">
+            <div className="space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -430,19 +512,6 @@ export default function AdminPage() {
   if (!user || !isAdmin) {
     router.push('/')
     return null
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading admin panel...</p>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -462,13 +531,14 @@ export default function AdminPage() {
         
         <AdminTabs 
           activeTab={activeTab} 
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           totalEvents={events.length}
           totalRegistrations={registrations.filter(r => r.eventId === selectedEventId && !(r.paymentStatus === 'pending' && r.paymentMethod === 'cash')).length}
           totalCheckins={checkins.filter(c => c.eventId === selectedEventId).length}
-          totalCashPayments={allRegistrations.filter(r => r.eventId === selectedEventId && r.paymentMethod === 'cash' && r.paymentStatus === 'pending').length}
-          selectedEventName={events.find(e => e.id === selectedEventId)?.title || ''}
+          totalCashPayments={allRegistrations.filter(r => r.paymentStatus === 'pending' && r.paymentMethod === 'cash').length}
+          selectedEventName={events.find(e => e.id === selectedEventId)?.title}
           paymentStatusBreakdown={getPaymentStatusBreakdown()}
+          tabLoading={tabLoading}
         >
           {activeTab === 'events' && (
             <EventsTab
